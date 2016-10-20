@@ -13,7 +13,6 @@
 #import "SUUpdateAlert.h"
 
 #import "SUHost.h"
-#import <WebKit/WebKit.h>
 
 #import "SUConstants.h"
 
@@ -26,6 +25,7 @@
 
 
 @implementation SUUpdateAlert
+
 @synthesize delegate;
 
 - (id)initWithAppcastItem:(SUAppcastItem *)item host:(SUHost *)aHost

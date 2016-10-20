@@ -9,6 +9,8 @@
 #ifndef SUUPDATEALERT_H
 #define SUUPDATEALERT_H
 
+#import <WebKit/WebKit.h>
+
 #import "SUWindowController.h"
 #import "SUVersionDisplayProtocol.h"
 
@@ -23,7 +25,7 @@ typedef enum
 } SUUpdateAlertChoice;
 
 @class WebView, SUAppcastItem, SUHost;
-@interface SUUpdateAlert : SUWindowController {
+@interface SUUpdateAlert : SUWindowController <WebFrameLoadDelegate, WebPolicyDelegate> {
 	SUAppcastItem *updateItem;
 	SUHost *host;
 	id<SUUpdateAlertDelegate> delegate;
