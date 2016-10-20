@@ -12,6 +12,17 @@
 #include <sys/mount.h> // For statfs for isRunningOnReadOnlyVolume
 #import "SULog.h"
 
+#if __MAC_OS_X_VERSION_MAX_ALLOWED < 101000
+typedef struct {
+    NSInteger majorVersion;
+    NSInteger minorVersion;
+    NSInteger patchVersion;
+} NSOperatingSystemVersion;
+@interface NSProcessInfo ()
+- (NSOperatingSystemVersion)operatingSystemVersion;
+@end
+#endif
+
 @interface SUHost ()
 @property (retain, readwrite) NSBundle *bundle;
 @end
@@ -177,17 +188,22 @@
 
 - (id)objectForUserDefaultsKey:(NSString *)defaultName
 {
+    if (!defaultName || !defaultsDomain) {
+        return nil;
+    }
+
 	// Under Tiger, CFPreferencesCopyAppValue doesn't get values from NSRegistrationDomain, so anything
 	// passed into -[NSUserDefaults registerDefaults:] is ignored.  The following line falls
 	// back to using NSUserDefaults, but only if the host bundle is the main bundle.
-	if (usesStandardUserDefaults)
+	if (usesStandardUserDefaults) {
 		return [[NSUserDefaults standardUserDefaults] objectForKey:defaultName];
+	}
 	
 	CFPropertyListRef obj = CFPreferencesCopyAppValue((CFStringRef)defaultName, (CFStringRef)defaultsDomain);
-	return [(id)CFMakeCollectable(obj) autorelease];
+	return CFBridgingRelease(obj);
 }
 
-- (void)setObject:(id)value forUserDefaultsKey:(NSString *)defaultName;
+- (void)setObject:(id)value forUserDefaultsKey:(NSString *)defaultName
 {
 	if (usesStandardUserDefaults)
 	{
@@ -225,7 +241,7 @@
 	}
 	else
 	{
-		CFPreferencesSetValue((CFStringRef)defaultName, (CFBooleanRef)[NSNumber numberWithBool:value], (CFStringRef)defaultsDomain,  kCFPreferencesCurrentUser,  kCFPreferencesAnyHost);
+		CFPreferencesSetValue((CFStringRef)defaultName, (CFBooleanRef)@(value), (CFStringRef)defaultsDomain,  kCFPreferencesCurrentUser,  kCFPreferencesAnyHost);
 		CFPreferencesSynchronize((CFStringRef)defaultsDomain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
 	}
 }
@@ -240,24 +256,15 @@
 
 + (NSString *)systemVersionString
 {
-	// This returns a version string of the form X.Y.Z
-	// There may be a better way to deal with the problem that gestaltSystemVersionMajor
-	//  et al. are not defined in 10.3, but this is probably good enough.
-	NSString* verStr = nil;
-	SInt32 major, minor, bugfix;
-	OSErr err1 = Gestalt(gestaltSystemVersionMajor, &major);
-	OSErr err2 = Gestalt(gestaltSystemVersionMinor, &minor);
-	OSErr err3 = Gestalt(gestaltSystemVersionBugFix, &bugfix);
-	if (!err1 && !err2 && !err3)
-	{
-		verStr = [NSString stringWithFormat:@"%ld.%ld.%ld", (long)major, (long)minor, (long)bugfix];
-	}
-	else
-	{
-	 	NSString *versionPlistPath = @"/System/Library/CoreServices/SystemVersion.plist";
-		verStr = [[NSDictionary dictionaryWithContentsOfFile:versionPlistPath] objectForKey:@"ProductVersion"];
-	}
-	return verStr;
+#if __MAC_OS_X_VERSION_MIN_REQUIRED < 1090 // Present in 10.9 despite NS_AVAILABLE's claims
+    if (![NSProcessInfo instancesRespondToSelector:@selector(operatingSystemVersion)])
+    {
+        NSURL *coreServices = [[NSFileManager defaultManager] URLForDirectory:NSCoreServiceDirectory inDomain:NSSystemDomainMask appropriateForURL:nil create:NO error:nil];
+        return [NSDictionary dictionaryWithContentsOfURL:[coreServices URLByAppendingPathComponent:@"SystemVersion.plist"]][@"ProductVersion"];
+    }
+#endif
+    NSOperatingSystemVersion version = [[NSProcessInfo processInfo] operatingSystemVersion];
+    return [NSString stringWithFormat:@"%ld.%ld.%ld", (long)version.majorVersion, (long)version.minorVersion, (long)version.patchVersion];
 }
 
 @end
