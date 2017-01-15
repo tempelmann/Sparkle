@@ -202,18 +202,18 @@
 
 - (void)showModalAlert:(NSAlert *)alert
 {
-	if ([[updater delegate] respondsToSelector:@selector(updaterWillShowModalAlert:)])
-		[[updater delegate] updaterWillShowModalAlert: updater];
+	[updater notifyWillShowModalAlert];
 
 	// When showing a modal alert we need to ensure that background applications
 	// are focused to inform the user since there is no dock icon to notify them.
-	if ([host isBackgroundApplication]) { [NSApp activateIgnoringOtherApps:YES]; }
+	if ([host isBackgroundApplication]) {
+		[NSApp activateIgnoringOtherApps:YES];
+	}
 	
 	[alert setIcon:[host icon]];
 	[alert runModal];
 	
-	if ([[updater delegate] respondsToSelector:@selector(updaterDidShowModalAlert:)])
-		[[updater delegate] updaterDidShowModalAlert: updater];
+	[updater notifyDidShowModalAlert];
 }
 
 @end

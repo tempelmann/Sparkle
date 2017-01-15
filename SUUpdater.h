@@ -58,6 +58,7 @@
 // in which case it proceeds as usual. If the fully automated updating is turned on, however, this will invoke that behavior, and if an
 // update is found, it will be downloaded and prepped for installation.
 - (void)checkForUpdatesInBackground;
+- (IBAction)checkForUpdatesSilently:(id)sender;
 
 // Date of last update check. Returns nil if no check has been performed.
 - (NSDate*)lastUpdateCheckDate;
@@ -70,6 +71,9 @@
 - (void)resetUpdateCycle;
 
 - (BOOL)updateInProgress;
+
+-(void)	notifyWillShowModalAlert;
+-(void)	notifyDidShowModalAlert;
 
 @end
 

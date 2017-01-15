@@ -295,6 +295,10 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 	[NSThread detachNewThreadSelector: @selector(checkForUpdatesInBgReachabilityCheckWithDriver:) toTarget: self withObject: theUpdateDriver];
 }
 
+- (IBAction)checkForUpdatesSilently:(id)sender
+{
+	[self checkForUpdatesInBackground];
+}
 
 - (BOOL)mayUpdateAndRestart
 {
@@ -433,9 +437,11 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 - (NSURL *)feedURL // *** MUST BE CALLED ON MAIN THREAD ***
 {
 	// A value in the user defaults overrides one in the Info.plist (so preferences panels can be created wherein users choose between beta / release feeds).
-	NSString *appcastString = [host objectForKey:SUFeedURLKey];
+	NSString *appcastString = nil;
 	if( [delegate respondsToSelector: @selector(feedURLStringForUpdater:)] )
 		appcastString = [delegate feedURLStringForUpdater: self];
+	if (!appcastString)
+		appcastString = [host objectForKey:SUFeedURLKey];
 	if (!appcastString) // Can't find an appcast string!
 		[NSException raise:@"SUNoFeedURL" format:@"You must specify the URL of the appcast as the SUFeedURL key in either the Info.plist or the user defaults!"];
 	NSCharacterSet* quoteSet = [NSCharacterSet characterSetWithCharactersInString: @"\"\'"]; // Some feed publishers add quotes; strip 'em.
