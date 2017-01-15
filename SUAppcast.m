@@ -181,6 +181,19 @@
 					}
 					[dict setObject:deltas forKey:@"deltas"];
 				}
+				else if ([name isEqualToString:@"sparkle:tags"])
+				{
+					NSMutableArray *tags = [NSMutableArray array];
+					NSEnumerator *childEnum = [[node children] objectEnumerator];
+					for (NSXMLNode *child in childEnum) {
+						NSString *childName = child.name;
+						if (childName) {
+							[tags addObject:childName];
+						}
+					}
+					[dict setObject:tags forKey:name];
+					
+				}
 				else if (name != nil)
 				{
 					// add all other values as strings
