@@ -61,7 +61,7 @@ static const NSTimeInterval SUAutomaticUpdatePromptImpatienceTimer = 60 * 60 * 2
     }
 
     // If this is marked as a critical update, we'll prompt the user to install it right away. 
-    if ([updateItem isCriticalUpdate])
+    if ([updateItem isCriticalUpdate] || [host isBackgroundApplication])
     {
         [self showUpdateAlert];
     }
