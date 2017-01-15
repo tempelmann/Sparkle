@@ -140,7 +140,10 @@ static const NSTimeInterval SUAutomaticUpdatePromptImpatienceTimer = 60 * 60 * 2
 	}
 }
 
-- (BOOL)shouldInstallSynchronously { return postponingInstallation; }
+- (BOOL)shouldInstallSynchronously
+{
+	return postponingInstallation;
+}
 
 - (void)installWithToolAndRelaunch:(BOOL)relaunch displayingUserInterface:(BOOL)showUI
 {
