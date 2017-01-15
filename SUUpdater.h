@@ -72,9 +72,6 @@
 
 - (BOOL)updateInProgress;
 
--(void)	notifyWillShowModalAlert;
--(void)	notifyDidShowModalAlert;
-
 @end
 
 // -----------------------------------------------------------------------------

@@ -11,5 +11,7 @@
 @interface SUUpdater (Private)
 
 - (BOOL)mayUpdateAndRestart;
+- (void)notifyWillShowModalAlert;
+- (void)notifyDidShowModalAlert;
 
 @end
