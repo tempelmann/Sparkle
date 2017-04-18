@@ -63,7 +63,7 @@ typedef struct {
     return [bundle bundlePath];
 }
 
-- (NSString *)appSupportPath
+- (NSString *)sparkleAppSupportPath	// TT18Apr17 renamed from appSupportPath because it was misleading as it's a subfolder (.Sparkle)
 {
     NSArray *appSupportPaths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
     NSString *appSupportPath = nil;

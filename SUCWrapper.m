@@ -43,6 +43,7 @@ bool SUCIsUpdateInProgress (void)
 //static feedParametersForUpdaterFunc feedParametersForUpdater = nil;
 static updateStatusFunc updateStatus = nil;
 static feedURLForUpdaterFunc feedURLForUpdater = nil;
+static downloadPathForUpdaterFunc downloadPathForUpdater = nil;
 
 void SUCSetStatusCallback (updateStatusFunc f)
 {
@@ -52,6 +53,11 @@ void SUCSetStatusCallback (updateStatusFunc f)
 void SUCSetFeedURLCallback (feedURLForUpdaterFunc f)
 {
 	feedURLForUpdater = f;
+}
+
+void SUCSetDownloadPathCallback (downloadPathForUpdaterFunc f)
+{
+	downloadPathForUpdater = f;
 }
 
 /*
@@ -140,6 +146,13 @@ void SUCSetFeedParmsCallback (feedParametersForUpdaterFunc f)
 	//- (void)updater:(SUUpdater *)updater willInstallUpdateOnQuit:(SUAppcastItem *)update immediateInstallationInvocation:(NSInvocation *)invocation { }
 	//- (void)updater:(SUUpdater *)updater didCancelInstallUpdateOnQuit:(SUAppcastItem *)update { }
 
+	// Supplies the folder into which updates are downloaded and the launcher is installed into. If not provided, [SHUost sparkleAppSupportPath] is used.
+	- (NSString*)downloadPathForUpdater:(SUUpdater*)updater {
+		if (downloadPathForUpdater) {
+			return downloadPathForUpdater();
+		}
+		return nil;
+	}
 @end
 
 // EOF

@@ -174,18 +174,30 @@
 	download = [[NSURLDownload alloc] initWithRequest:request delegate:self];
 }
 
+- (NSString *)downloadDestination	// uses Library/Application Support/AppName/.Sparkle by default, but delegate may override it
+{
+	NSString *path = nil;
+	if ([[updater delegate] respondsToSelector:@selector(downloadPathForUpdater:)]) {
+		path = [[updater delegate] downloadPathForUpdater:updater];
+	}
+	if (!path) {
+		path = [host sparkleAppSupportPath];
+	}
+	return path;
+}
+
 - (void)download:(NSURLDownload *)d decideDestinationWithSuggestedFilename:(NSString *)name
 {
 	NSString *downloadFileName = [NSString stringWithFormat:@"%@ %@", [host name], [updateItem versionString]];
     
     
 	[tempDir release];
-	tempDir = [[[host appSupportPath] stringByAppendingPathComponent:downloadFileName] retain];
+	tempDir = [[[self downloadDestination] stringByAppendingPathComponent:downloadFileName] retain];
 	int cnt=1;
 	while ([[NSFileManager defaultManager] fileExistsAtPath:tempDir] && cnt <= 999)
 	{
 		[tempDir release];
-		tempDir = [[[host appSupportPath] stringByAppendingPathComponent:[NSString stringWithFormat:@"%@ %d", downloadFileName, cnt++]] retain];
+		tempDir = [[[self downloadDestination] stringByAppendingPathComponent:[NSString stringWithFormat:@"%@ %d", downloadFileName, cnt++]] retain];
 	}
 	
     // Create the temporary directory if necessary.
@@ -324,7 +336,7 @@
 	NSString *relaunchPathToCopy = [SPARKLE_BUNDLE pathForResource:finishInstallToolName ofType:@"app"];
 	if (relaunchPathToCopy != nil)
 	{
-		NSString *targetPath = [[host appSupportPath] stringByAppendingPathComponent:[relaunchPathToCopy lastPathComponent]];
+		NSString *targetPath = [[self downloadDestination] stringByAppendingPathComponent:[relaunchPathToCopy lastPathComponent]];
 		// Only the paranoid survive: if there's already a stray copy of relaunch there, we would have problems.
 		NSError *error = nil;
 		[[NSFileManager defaultManager] createDirectoryAtPath: [targetPath stringByDeletingLastPathComponent] withIntermediateDirectories: YES attributes: [NSDictionary dictionary] error: &error];

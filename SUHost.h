@@ -23,7 +23,7 @@
 
 - (id)initWithBundle:(NSBundle *)aBundle;
 - (NSString *)bundlePath;
-- (NSString *)appSupportPath;
+- (NSString *)sparkleAppSupportPath;
 - (NSString *)installationPath;
 - (NSString *)name;
 - (NSString *)version;

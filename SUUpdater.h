@@ -147,6 +147,9 @@ extern NSString *const SUUpdaterAppcastNotificationKey;
 // Returns the path which is used to relaunch the client after the update is installed. By default, the path of the host bundle.
 - (NSString *)pathToRelaunchForUpdater:(SUUpdater *)updater;
 
+// Returns the path into which updates are downloaded and the launcher is installed into. Default is [SHUost sparkleAppSupportPath].
+- (NSString *)downloadPathForUpdater:(SUUpdater *)updater;
+
 // Called before and after, respectively, an updater shows a modal alert window, to give the host
 //	the opportunity to hide attached windows etc. that may get in the way:
 -(void)	updaterWillShowModalAlert:(SUUpdater *)updater;
