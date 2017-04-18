@@ -27,7 +27,7 @@
 	<key>SUEnableSystemProfiling</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>http://www.andymatuschak.org/files/sparkletestcast.xml</string>
+	<string>http://sparkle-project.org/files/sparkletestcast.xml</string>
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
 </dict>
