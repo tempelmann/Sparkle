@@ -215,14 +215,15 @@
 
 - (BOOL)validateUpdateDownloadedToPath:(NSString *)downloadedPath extractedToPath:(NSString *)extractedPath DSASignature:(NSString *)DSASignature publicDSAKey:(NSString *)publicDSAKey
 {
+	// Change by TT 4 Dec 17: Instead of accepting just a good Apple code signature whilst ignoring the DSASignature,
+	//	the code instead now requires that BOTH are valid. This prevents man-in-the-middle attacks that would use a
+	//	different but valid code signature.
     NSString *newBundlePath = [SUInstaller appPathInUpdateFolder:extractedPath forHost:host];
-    if (newBundlePath)
-    {
+    if (newBundlePath) {
         NSError *error = nil;
-        if ([SUCodeSigningVerifier codeSignatureIsValidAtPath:newBundlePath error:&error]) {
-            return YES;
-        } else {
+        if (![SUCodeSigningVerifier codeSignatureIsValidAtPath:newBundlePath error:&error]) {
             SULog(@"Code signature check on update failed: %@", error);
+			return NO;
         }
     }
     

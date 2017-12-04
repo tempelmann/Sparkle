@@ -16,7 +16,7 @@
 
 // Turn off DSA signature check (practically invites man-in-the-middle attacks):
 #ifdef DEBUG
-	#define ENDANGER_USERS_WITH_INSECURE_UPDATES	1
+	#define ENDANGER_USERS_WITH_INSECURE_UPDATES	0
 #else
 	#define ENDANGER_USERS_WITH_INSECURE_UPDATES	0
 #endif
