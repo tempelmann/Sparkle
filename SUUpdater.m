@@ -116,6 +116,11 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 // This will be used when the updater is instantiated in a nib such as MainMenu
 - (id)init
 {
+/*
+	NSLog (@"init…");
+	NSString *currentSystemVersion = [SUHost systemVersionString];
+	NSLog (@"Sys version: %@", currentSystemVersion);
+*/
     return [self initForBundle:[NSBundle mainBundle]];
 }
 

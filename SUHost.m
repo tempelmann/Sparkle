@@ -241,7 +241,7 @@ typedef struct {
 	}
 	else
 	{
-		CFPreferencesSetValue((CFStringRef)defaultName, (CFBooleanRef)@(value), (CFStringRef)defaultsDomain,  kCFPreferencesCurrentUser,  kCFPreferencesAnyHost);
+		CFPreferencesSetValue((CFStringRef)defaultName, value ? kCFBooleanTrue : kCFBooleanFalse, (CFStringRef)defaultsDomain,  kCFPreferencesCurrentUser,  kCFPreferencesAnyHost);
 		CFPreferencesSynchronize((CFStringRef)defaultsDomain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
 	}
 }
@@ -256,15 +256,16 @@ typedef struct {
 
 + (NSString *)systemVersionString
 {
-#if __MAC_OS_X_VERSION_MIN_REQUIRED < 1090 // Present in 10.9 despite NS_AVAILABLE's claims
     if (![NSProcessInfo instancesRespondToSelector:@selector(operatingSystemVersion)])
     {
         NSURL *coreServices = [[NSFileManager defaultManager] URLForDirectory:NSCoreServiceDirectory inDomain:NSSystemDomainMask appropriateForURL:nil create:NO error:nil];
-        return [NSDictionary dictionaryWithContentsOfURL:[coreServices URLByAppendingPathComponent:@"SystemVersion.plist"]][@"ProductVersion"];
-    }
-#endif
-    NSOperatingSystemVersion version = [[NSProcessInfo processInfo] operatingSystemVersion];
-    return [NSString stringWithFormat:@"%ld.%ld.%ld", (long)version.majorVersion, (long)version.minorVersion, (long)version.patchVersion];
+		NSURL *url = [coreServices URLByAppendingPathComponent:@"SystemVersion.plist"];
+		NSDictionary *d = [NSDictionary dictionaryWithContentsOfURL:url];
+        return [d valueForKey:@"ProductVersion"];
+    } else {
+		NSOperatingSystemVersion version = [[NSProcessInfo processInfo] operatingSystemVersion];
+		return [NSString stringWithFormat:@"%ld.%ld.%ld", (long)version.majorVersion, (long)version.minorVersion, (long)version.patchVersion];
+	}
 }
 
 @end
