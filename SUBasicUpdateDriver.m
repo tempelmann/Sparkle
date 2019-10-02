@@ -215,9 +215,10 @@
 
 - (BOOL)validateUpdateDownloadedToPath:(NSString *)downloadedPath extractedToPath:(NSString *)extractedPath DSASignature:(NSString *)DSASignature publicDSAKey:(NSString *)publicDSAKey
 {
-	// Change by TT 4 Dec 17: Instead of accepting just a good Apple code signature whilst ignoring the DSASignature,
-	//	the code instead now requires that BOTH are valid. This prevents man-in-the-middle attacks that would use a
-	//	different but valid code signature.
+	// TT 3 Oct 19:
+	// In order to allow a changing certificate owner (from GVZ7RF955D of Irradiated to 25856V4B4X of Tempelmann)
+	// We must not perform the code signing check but only the DSA check
+	/*
     NSString *newBundlePath = [SUInstaller appPathInUpdateFolder:extractedPath forHost:host];
     if (newBundlePath) {
         NSError *error = nil;
@@ -226,7 +227,7 @@
 			return NO;
         }
     }
-    
+    */
     return [SUDSAVerifier validatePath:downloadedPath withEncodedDSASignature:DSASignature withPublicDSAKey:publicDSAKey];
 }
 
