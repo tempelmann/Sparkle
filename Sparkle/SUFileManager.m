@@ -645,7 +645,7 @@ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
     return YES;
 }
 
-- (BOOL)_changeOwnerAndGroupOfItemAtURL:(NSURL *)targetURL ownerID:(NSNumber *)ownerID groupID:(NSNumber *)groupID needsAuth:(BOOL *)needsAuth error:(NSError * __autoreleasing *)error
+- (BOOL)_changeOwnerAndGroupOfItemAtURL:(NSURL *)targetURL ownerID:(NSNumber *)ownerID groupID:(NSNumber *)groupID error:(NSError * __autoreleasing *)error
 {
     char path[PATH_MAX] = {0};
     if (![targetURL.path getFileSystemRepresentation:path maxLength:sizeof(path)]) {
@@ -662,25 +662,18 @@ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
         }
         return NO;
     }
-
+    
     // We use fchown instead of chown because the latter can follow symbolic links
-    BOOL success = fchown(fileDescriptor, ownerID.unsignedIntValue, groupID.unsignedIntValue) == 0;
+    BOOL success = (fchown(fileDescriptor, ownerID.unsignedIntValue, groupID.unsignedIntValue) == 0);
     close(fileDescriptor);
-
+    
     if (!success) {
-        if (errno == EPERM) {
-            if (needsAuth != NULL) {
-                *needsAuth = YES;
-            }
-        } else {
-            if (error != NULL) {
-                *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Failed to change owner & group for %@ with owner ID %u and group ID %u.", targetURL.path.lastPathComponent, ownerID.unsignedIntValue, groupID.unsignedIntValue] }];
-            }
-            return NO;
+        if (error != NULL) {
+            *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Failed to change owner & group for %@ with owner ID %u and group ID %u.", targetURL.path.lastPathComponent, ownerID.unsignedIntValue, groupID.unsignedIntValue] }];
         }
     }
 
-    return YES;
+    return success;
 }
 
 - (BOOL)changeOwnerAndGroupOfItemAtRootURL:(NSURL *)targetURL toMatchURL:(NSURL *)matchURL error:(NSError * __autoreleasing *)error
@@ -746,20 +739,18 @@ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
         // Speeds up the common case
         return YES;
     }
-
-    BOOL needsAuth = NO;
-
+    
     // If we can't change both the new owner & group, try to only change the owner
     // If this works, this is sufficient enough for performing the update
     NSNumber *groupIDToUse;
-    if (![self _changeOwnerAndGroupOfItemAtURL:targetURL ownerID:ownerID groupID:groupID needsAuth:&needsAuth error:NULL]) {
+    if (![self _changeOwnerAndGroupOfItemAtURL:targetURL ownerID:ownerID groupID:groupID error:NULL]) {
         if ((targetOwnerID != nil && [ownerID isEqualToNumber:targetOwnerID])) {
             // Assume they're the same even if we don't check every file recursively
             // Speeds up the common case like above
             return YES;
         }
         
-        if (![self _changeOwnerAndGroupOfItemAtURL:targetURL ownerID:ownerID groupID:targetGroupID needsAuth:&needsAuth error:error]) {
+        if (![self _changeOwnerAndGroupOfItemAtURL:targetURL ownerID:ownerID groupID:targetGroupID error:error]) {
             return NO;
         }
         
@@ -771,47 +762,15 @@ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
     if (isTargetADirectory) {
         NSDirectoryEnumerator *directoryEnumerator = [_fileManager enumeratorAtURL:targetURL includingPropertiesForKeys:nil options:(NSDirectoryEnumerationOptions)0 errorHandler:nil];
         for (NSURL *url in directoryEnumerator) {
-            if (![self _changeOwnerAndGroupOfItemAtURL:url ownerID:ownerID groupID:groupIDToUse needsAuth:&needsAuth error:error]) {
+            if (![self _changeOwnerAndGroupOfItemAtURL:url ownerID:ownerID groupID:groupIDToUse error:error]) {
                 return NO;
             }
-
-            if (needsAuth) {
-                break;
-            }
         }
     }
-
-    if (!needsAuth) {
-        return YES;
-    }
-
-    char targetPath[PATH_MAX] = {0};
-    if (![targetURL.path getFileSystemRepresentation:targetPath maxLength:sizeof(targetPath)]) {
-        if (error != NULL) {
-            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileReadInvalidFileNameError userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Target file (%@) cannot be represented as a valid file name.", targetURL.path.lastPathComponent] }];
-        }
-        return NO;
-    }
-
-    char matchPath[PATH_MAX] = {0};
-    if (![matchURLPath getFileSystemRepresentation:matchPath maxLength:sizeof(matchPath)]) {
-        if (error != NULL) {
-            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileReadInvalidFileNameError userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Match file (%@) cannot be represented as a valid file name.", matchURL.path.lastPathComponent] }];
-        }
-        return NO;
-    }
-
-    SULog(SULogLevelDefault, @"Sparkle: Authorization required to change permissions of %@ to match %@", targetURL, matchURL);
-
-    NSError *executeError = nil;
-    BOOL success = [self _authorizeAndExecuteCommand:SUFileOpChangeOwnerAndGroupCommand sourcePath:targetPath destinationPath:matchPath error:&executeError];
-    if (!success && error != NULL) {
-        NSString *errorMessage = [NSString stringWithFormat:@"Failed to change owner & group on %@ to match %@ with authorization.", targetURL.path.lastPathComponent, matchURLPath.lastPathComponent];
-        *error = [NSError errorWithDomain:SUSparkleErrorDomain code:SUAuthenticationFailure userInfo:@{ NSLocalizedDescriptionKey: errorMessage, NSUnderlyingErrorKey: executeError }];
-    }
-
-    return success;
+    
+    return YES;
 }
+
 
 // /usr/bin/touch can be used to update an application, as described in:
 // https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/LaunchServicesConcepts/LSCConcepts/LSCConcepts.html
