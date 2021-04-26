@@ -749,14 +749,29 @@ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
 
     BOOL needsAuth = NO;
 
-    if (![self _changeOwnerAndGroupOfItemAtURL:targetURL ownerID:ownerID groupID:groupID needsAuth:&needsAuth error:error]) {
-        return NO;
+    // If we can't change both the new owner & group, try to only change the owner
+    // If this works, this is sufficient enough for performing the update
+    NSNumber *groupIDToUse;
+    if (![self _changeOwnerAndGroupOfItemAtURL:targetURL ownerID:ownerID groupID:groupID needsAuth:&needsAuth error:NULL]) {
+        if ((targetOwnerID != nil && [ownerID isEqualToNumber:targetOwnerID])) {
+            // Assume they're the same even if we don't check every file recursively
+            // Speeds up the common case like above
+            return YES;
+        }
+        
+        if (![self _changeOwnerAndGroupOfItemAtURL:targetURL ownerID:ownerID groupID:targetGroupID needsAuth:&needsAuth error:error]) {
+            return NO;
+        }
+        
+        groupIDToUse = targetGroupID;
+    } else {
+        groupIDToUse = groupID;
     }
 
     if (isTargetADirectory) {
         NSDirectoryEnumerator *directoryEnumerator = [_fileManager enumeratorAtURL:targetURL includingPropertiesForKeys:nil options:(NSDirectoryEnumerationOptions)0 errorHandler:nil];
         for (NSURL *url in directoryEnumerator) {
-            if (![self _changeOwnerAndGroupOfItemAtURL:url ownerID:ownerID groupID:groupID needsAuth:&needsAuth error:error]) {
+            if (![self _changeOwnerAndGroupOfItemAtURL:url ownerID:ownerID groupID:groupIDToUse needsAuth:&needsAuth error:error]) {
                 return NO;
             }
 
